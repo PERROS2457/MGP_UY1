@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MGP · Université de Yaoundé I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ink:#10192E;
+  --ink-2:#182544;
+  --ink-3:#233163;
+  --paper:#F6F2E9;
+  --paper-2:#ECE4D2;
+  --paper-3:#DED2AF;
+  --gold:#C6A15B;
+  --gold-2:#E4C687;
+  --teal:#1F5C57;
+  --brick:#A8402C;
+  --forest:#2F6F4E;
+  --amber:#B9791F;
+  --text-on-paper:#1B2333;
+  --text-on-ink:#EDE6D6;
+  --font-display:'Fraunces', serif;
+  --font-body:'Work Sans', sans-serif;
+  --font-mono:'IBM Plex Mono', monospace;
+
+  --bg: var(--paper);
+  --bg-2: var(--paper-2);
+  --bg-3: var(--paper-3);
+  --surface: #FFFDF8;
+  --text: var(--text-on-paper);
+  --text-muted: #5C6478;
+  --border: #D8CFB8;
+  --accent: var(--teal);
+  --accent-ink: #ffffff;
+}
+[data-theme="dark"]{
+  --bg: var(--ink);
+  --bg-2: var(--ink-2);
+  --bg-3: var(--ink-3);
+  --surface: #141F3B;
+  --text: var(--text-on-ink);
+  --text-muted: #9BA3C4;
+  --border: #2A3866;
+  --accent: var(--gold);
+  --accent-ink: #10192E;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  transition:background .4s ease, color .4s ease;
+  min-height:100vh;
+}
+h1,h2,h3,.display{font-family:var(--font-display);}
+.mono{font-family:var(--font-mono);}
+button{font-family:inherit;cursor:pointer;}
+input,select{font-family:inherit;}
+
+/* ============ LAYOUT ============ */
+.app{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  min-height:100vh;
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{position:sticky;top:0;z-index:20;}
+}
+
+.sidebar{
+  background:var(--bg-2);
+  border-right:1px solid var(--border);
+  padding:28px 22px;
+  display:flex;
+  flex-direction:column;
+  gap:26px;
+}
+@media (max-width:900px){
+  .sidebar{border-right:none;border-bottom:1px solid var(--border);}
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.brand .seal-mini{
+  width:42px;height:42px;border-radius:50%;
+  border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:15px;
+  color:var(--accent);flex-shrink:0;
+}
+.brand h1{font-size:16px;margin:0;line-height:1.25;letter-spacing:.02em;}
+.brand span{display:block;font-size:11px;color:var(--text-muted);font-family:var(--font-body);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+
+.field-group label{
+  display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text-muted);margin-bottom:6px;
+}
+.field-group input[type="text"]{
+  width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:14px;
+}
+.field-group input[type="text"]:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+.tabs{display:flex;flex-direction:column;gap:6px;}
+.tab-btn{
+  text-align:left;padding:10px 14px;border-radius:8px;border:1px solid transparent;
+  background:transparent;color:var(--text);font-size:13.5px;font-weight:500;
+  display:flex;justify-content:space-between;align-items:center;
+  transition:background .2s, border-color .2s;
+}
+.tab-btn:hover{background:var(--bg-3);}
+.tab-btn.active{background:var(--accent);color:var(--accent-ink);font-weight:600;}
+.tab-btn .credit-pill{font-family:var(--font-mono);font-size:11px;opacity:.8;}
+
+.side-actions{display:flex;flex-direction:column;gap:8px;margin-top:auto;}
+.btn{
+  padding:10px 14px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:13px;font-weight:500;
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  transition:transform .15s, border-color .2s, background .2s;
+}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px);}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.btn.danger{color:var(--brick);}
+.btn.danger:hover{border-color:var(--brick);}
+.btn svg{width:15px;height:15px;flex-shrink:0;}
+.theme-toggle{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;border-radius:20px;background:var(--bg-3);
+  font-size:12px;color:var(--text-muted);
+}
+.theme-toggle button{
+  width:36px;height:20px;border-radius:20px;border:none;background:var(--accent);
+  position:relative;
+}
+.theme-toggle button::after{
+  content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+  background:var(--accent-ink);transition:left .25s ease;
+}
+[data-theme="dark"] .theme-toggle button::after{left:18px;}
+
+/* ============ MAIN ============ */
+.main{padding:32px clamp(18px,4vw,48px);max-width:1280px;}
+.top-row{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;
+  margin-bottom:28px;
+}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:6px;}
+.page-title{font-size:clamp(24px,3vw,32px);margin:0;font-weight:600;}
+.page-sub{color:var(--text-muted);font-size:13.5px;margin-top:6px;max-width:52ch;}
+
+/* Hero: seal gauge + status */
+.hero{
+  display:grid;grid-template-columns:180px 1fr;gap:32px;align-items:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:18px;
+  padding:26px;margin-bottom:30px;
+}
+@media (max-width:640px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center;}}
+.seal-wrap{position:relative;width:170px;height:170px;}
+.seal-wrap svg{width:100%;height:100%;}
+.seal-value{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;
+}
+.seal-value .num{font-family:var(--font-display);font-size:34px;font-weight:700;line-height:1;color:var(--text);}
+.seal-value .den{font-family:var(--font-mono);font-size:12px;color:var(--text-muted);}
+
+.status-block{display:flex;flex-direction:column;gap:10px;}
+.status-badge{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:30px;
+  font-weight:700;font-size:14px;letter-spacing:.03em;width:fit-content;
+}
+.status-badge.admis{background:rgba(47,111,78,.15);color:var(--forest);border:1px solid var(--forest);}
+.status-badge.ajourne{background:rgba(185,121,31,.15);color:var(--amber);border:1px solid var(--amber);}
+.status-badge.echec{background:rgba(168,64,44,.16);color:var(--brick);border:1px solid var(--brick);animation:pulse-alert 1.6s infinite;}
+@keyframes pulse-alert{
+  0%,100%{box-shadow:0 0 0 0 rgba(168,64,44,.35);}
+  50%{box-shadow:0 0 0 8px rgba(168,64,44,0);}
+}
+.status-meta{font-size:13px;color:var(--text-muted);}
+.status-meta b{color:var(--text);font-weight:600;}
+
+/* Stat cards */
+.stats-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:30px;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
+  transition:transform .2s;
+}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);}
+.stat-card .value{font-family:var(--font-mono);font-size:24px;font-weight:600;margin-top:6px;}
+.stat-card .value.gold{color:var(--accent);}
+.stat-card .value.forest{color:var(--forest);}
+.stat-card .value.brick{color:var(--brick);}
+
+/* Section headers */
+.section{margin-bottom:34px;}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.section-head h2{font-size:18px;margin:0;font-weight:600;}
+.section-head .hint{font-size:12px;color:var(--text-muted);}
+
+/* Table */
+.table-wrap{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;
+}
+table{width:100%;border-collapse:collapse;}
+thead th{
+  text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);
+  padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg-2);
+}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--bg-2);}
+td input[type="text"], td input[type="number"]{
+  width:100%;padding:7px 9px;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:13.5px;font-family:var(--font-mono);
+}
+td input[type="text"]{font-family:var(--font-body);}
+td input:focus{outline:2px solid var(--accent);outline-offset:0;}
+.point-pill{font-family:var(--font-mono);font-weight:600;}
+.status-pill{
+  display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.02em;
+}
+.status-pill.ca{background:rgba(47,111,78,.15);color:var(--forest);}
+.status-pill.cant{background:rgba(185,121,31,.15);color:var(--amber);}
+.status-pill.echec{background:rgba(168,64,44,.16);color:var(--brick);}
+.row-del{
+  border:none;background:transparent;color:var(--text-muted);width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+}
+.row-del:hover{color:var(--brick);background:rgba(168,64,44,.1);}
+.table-foot{
+  display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--bg-2);
+  font-size:12px;color:var(--text-muted);flex-wrap:wrap;gap:8px;
+}
+.table-foot .warn{color:var(--brick);font-weight:600;}
+.add-row-btn{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:1px dashed var(--border);
+  background:transparent;color:var(--accent);font-size:13px;font-weight:600;
+}
+.add-row-btn:hover{border-color:var(--accent);background:var(--bg-2);}
+.add-row-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* Charts */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.chart-card h3{margin:0 0 12px;font-size:13.5px;font-weight:600;}
+.chart-card .canvas-box{position:relative;height:220px;}
+
+/* Simulator */
+.sim-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;}
+.sim-row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+.sim-field{flex:1;min-width:160px;}
+.sim-field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;}
+.sim-field select, .sim-field input{
+  width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13.5px;
+}
+.sim-result{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:6px;
+  border-top:1px dashed var(--border);padding-top:16px;
+}
+.sim-result .item .label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;}
+.sim-result .item .value{font-family:var(--font-mono);font-size:19px;font-weight:600;margin-top:4px;}
+.sim-result .item .value.up{color:var(--forest);}
+.sim-result .item .value.down{color:var(--brick);}
+
+footer{text-align:center;padding:26px;color:var(--text-muted);font-size:12px;}
+
+/* Print */
+@media print{
+  .sidebar,.top-row .btn, .no-print{display:none !important;}
+  .app{display:block;}
+  body{background:#fff;color:#000;}
+  .surface, .table-wrap, .stat-card, .hero, .chart-card, .sim-card{border:1px solid #999 !important;background:#fff !important;}
+}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--text-on-ink);padding:12px 20px;border-radius:10px;font-size:13px;
+  opacity:0;pointer-events:none;transition:opacity .3s, transform .3s;z-index:100;
+  border:1px solid var(--gold);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.fade-in{animation:fadeIn .4s ease both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important;}
+}
+</style>
+</head>
+<body data-theme="light">
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="seal-mini">UY1</div>
+      <div>
+        <h1>Calculateur MGP</h1>
+        <span>Université de Yaoundé I</span>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="studentName">Nom de l'étudiant (facultatif)</label>
+      <input type="text" id="studentName" placeholder="Ex. Perros N.">
+    </div>
+
+    <div>
+      <label style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px;">Période</label>
+      <div class="tabs" id="tabs"></div>
+    </div>
+
+    <div class="theme-toggle">
+      <span id="themeLabel">Mode clair</span>
+      <button id="themeBtn" aria-label="Changer de thème"></button>
+    </div>
+
+    <div class="side-actions">
+      <button class="btn primary" id="btnPdf">Exporter en PDF</button>
+      <button class="btn" id="btnPrint">Imprimer</button>
+      <button class="btn" id="btnShare">Partager</button>
+      <button class="btn danger" id="btnReset">Réinitialiser tout</button>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <div class="top-row">
+      <div>
+        <div class="eyebrow">Tableau de bord académique</div>
+        <h2 class="page-title" id="pageTitle">Semestre 1</h2>
+        <p class="page-sub">Saisissez vos UE, crédits et notes sur 100. La MGP, le statut de chaque UE et la validation académique se calculent automatiquement, selon les règles UY1.</p>
+      </div>
+    </div>
+
+    <!-- HERO : seal gauge + status -->
+    <section class="hero fade-in">
+      <div class="seal-wrap">
+        <svg viewBox="0 0 170 170">
+          <circle cx="85" cy="85" r="74" fill="none" stroke="var(--border)" stroke-width="10"/>
+          <circle id="gaugeArc" cx="85" cy="85" r="74" fill="none" stroke="var(--accent)" stroke-width="10"
+                  stroke-linecap="round" transform="rotate(-90 85 85)" stroke-dasharray="464.9" stroke-dashoffset="464.9"/>
+        </svg>
+        <div class="seal-value">
+          <div class="num" id="mgpValue">0.00</div>
+          <div class="den">MGP / 4.00</div>
+        </div>
+      </div>
+      <div class="status-block">
+        <div class="status-badge ajourne" id="statusBadge">EN ATTENTE DE SAISIE</div>
+        <div class="status-meta" id="statusMeta">Ajoutez au moins une UE pour lancer le calcul.</div>
+        <div class="status-meta">Crédits validés : <b id="metaValid">0</b> — Crédits non validés : <b id="metaInvalid">0</b></div>
+      </div>
+    </section>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">MGP actuelle</div><div class="value gold" id="statMgp">0.00</div></div>
+      <div class="stat-card"><div class="label">Crédits validés</div><div class="value forest" id="statValid">0</div></div>
+      <div class="stat-card"><div class="label">Crédits non validés</div><div class="value brick" id="statInvalid">0</div></div>
+      <div class="stat-card"><div class="label">UE en CA</div><div class="value" id="statCA">0</div></div>
+      <div class="stat-card"><div class="label">UE en CANT</div><div class="value" id="statCANT">0</div></div>
+      <div class="stat-card"><div class="label">UE en échec</div><div class="value brick" id="statECHEC">0</div></div>
+    </div>
+
+    <!-- TABLE -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Unités d'enseignement</h2>
+        <span class="hint">Maximum 12 UE · 6 crédits max/UE · 30 crédits max/semestre</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:34%">UE</th>
+              <th style="width:12%">Crédit</th>
+              <th style="width:14%">Note /100</th>
+              <th style="width:14%">Point</th>
+              <th style="width:16%">Statut</th>
+              <th style="width:5%"></th>
+            </tr>
+          </thead>
+          <tbody id="ueTableBody"></tbody>
+        </table>
+        <div class="table-foot">
+          <button class="add-row-btn" id="btnAddUE">+ Ajouter une UE</button>
+          <span id="creditWarning"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Analyse graphique</h2>
+        <span class="hint">Vue : <span id="chartsScope">Semestre 1</span></span>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Répartition des notes</h3>
+          <div class="canvas-box"><canvas id="chartNotes"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Répartition des crédits par UE</h3>
+          <div class="canvas-box"><canvas id="chartCredits"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Évolution MGP — S1 → S2</h3>
+          <div class="canvas-box"><canvas id="chartEvolution"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Distribution des statuts</h3>
+          <div class="canvas-box"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SIMULATOR -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Simulateur de note</h2>
+        <span class="hint">Aucune donnée réelle n'est modifiée</span>
+      </div>
+      <div class="sim-card">
+        <div class="sim-row">
+          <div class="sim-field">
+            <label>UE à simuler</label>
+            <select id="simUeSelect"></select>
+          </div>
+          <div class="sim-field">
+            <label>Nouvelle note hypothétique /100</label>
+            <input type="number" id="simNote" min="0" max="100" step="0.5" placeholder="Ex. 65">
+          </div>
+          <div class="sim-field" style="flex:0 0 auto;">
+            <button class="btn primary" id="btnSimulate">Recalculer</button>
+          </div>
+        </div>
+        <div class="sim-result" id="simResult" style="display:none;">
+          <div class="item"><div class="label">Nouvelle MGP</div><div class="value" id="simMgp">—</div></div>
+          <div class="item"><div class="label">Crédits validés</div><div class="value" id="simValid">—</div></div>
+          <div class="item"><div class="label">Nouveau statut</div><div class="value" id="simStatus">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>MGP Calculator · Règles académiques Université de Yaoundé I · Données stockées uniquement sur cet appareil</footer>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   CONSTANTES & RÈGLES ACADÉMIQUES UY1
+   ============================================================ */
+const MAX_UE = 12;
+const MAX_CREDIT_UE = 6;
+const MAX_CREDIT_SEMESTRE = 30;
+const STORAGE_KEY = "uy1_mgp_calculator_v1";
+const LOGO_DATA_URI = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxITEBUSEBMRFhUXGRoaGBcXGR8gHhsdIB0dHR0bIB8dHikgGxsxHhgXIjUhJSkrLjEuGB8zODMtNygtLisBCgoKBQUFDgUFDisZExkrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrK//AABEIAOwBHAMBIgACEQEDEQH/xAAcAAEAAwEBAQEBAAAAAAAAAAAABQYHBAMBAgj/xABCEAACAQMCAwQGCQIFAgcBAAABAgMABBEFEgYhMQcTIkEUMlFSYZEWIzNCcXKBstIVoUNiscHRJKIIFyVTkuHwVf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDbKUpQKUpQKUpQKUpQKUpQKUpQKUpQKUpQKVE8QcSWlkm+7mSMHoDzY/go5mqb/wCdOm4yEuyvmwjGB/3UGkUqD4a4ts75c2sysfNDycfip51OUClKUClKUClKUClKUClKUClKUClKUCqnxZ9sv5B+5qtlVPiz7ZfyD9zUFspSlApSlApSlApSlApSlApSlApSubUr+OCJ5p3CRoMsx8h/z8KD2mlVFLuQqqMlicAD2k1lmt9pst1MbLQ4jJIeRnYeBR0LD2D/ADGq3xRxS2sBmZntdMgPjY+vM3kigcmY45L0HU126pZ+j2tlNFAkWnyFd0OSzhicrJK0R3TZA5KDyJoJ3QOyYGUXOrztdze4SSg/Enm34chWiQ6VbrF3KwwiLBHdhBtwevLFU3VO0yC0tle6jKztnu7VTlwv3O89wkYJB51mV123X5uVkRIlhX/BxncP8zdc/hQaJxP2TW0pE2nsbO4X1THkKT8QOan4ioW3411PSGEOtQtPCeSXEfM/gT0Y/A4NS/D/AGu291CwVFjuwDshkfakjeQDnl+hqs6Zqnd7pbnvnDLLJqKXKkQ7jnuoo1Yc5N2ACvlQbDousQXcKzW0iyI3mOo+BHUH4Gu+v5008yWrHU9F7wImDc2TnJQMOR5evEfJuoxW28GcUQ6jarPCQD0kjzko3mD8PYaCepSlApSlApSlApSlApSlApSlAqp8WfbL+QfuarZVT4s+2X8g/c1BbKUpQKUpQKUpQKUpQKUpQKUpQfiWQKpZiAoBJJ6ADqawbi3iE6xO+53h0u1O55ACTIc4HwLk8lHl1qw9qWvTXd0mi6e3ic4uWA9UcvCT7oHM/oKitP1TuHGlJaGa3BdZLRoyJnUYPpG5iASzcwo6ACglNIv4BPavaRi4t8LH6Gu0taOQR3px4WyN25j7etQuqcSNbyyaVoLSTtJISp5MsHXckPwBJO89PLpUfxhdi2maw0+Qd9Mgjmc7I1hiHNYAV5AgE72JzUtwjptn6EiWFpfS3mcm5T6sJIPMSnw938BnIoIK64YnsZltZEEl9eMFS5ZtyIjcnIB596DnJPl0qAXgvKSOsjFRFNKnLm6RSBGPwz4iPwq88WSaja6lp11qxgaNcx95FnALAhi2ejc85HLAqNg1iOCJoWZTLDZ3dvtz6zvKNhHtBVtwoObSeEvSbsaRKUQIvfRXBXEvdsu4Jgcm5sDz6YOK+3GqS27DTtUcywW82IbxAX7lwMgc/DIuDgoeYGcV76JqkrawEscPMttHaxseYBCASSk+YXxH44FXviDR4zDDoNqAzSfWXErDcY1zlpTnpIzdPxoJl9RtrLSTcxyWjHuTskVQqynmQoA5kZPq/E1lEN3JZNHrOnglGwLy3CsqKzDJxkfZnng+Rr7cL/SL9dPvWSeyLiWIuMmInO2QAdCD6y9CBVqi1q8a9a3vryzaySHfclYwsZWQEIgJGWJBBBHxoNM4e1qG8tkubdso4/UHzU/EGpKsI4U1ZdH1ERJKJtNuz9VKDkKc4z8GUnaR7MGt2oPtKUoFKUoFKUoFKUoFKUoFVPiz7ZfyD9zVbKqfFn2y/kH7moLZSlKBSlKBSlKBSlKBSlKBUHxpr62NjNct1VcIPa55KPnz/Spysd7Yrk3eo2elqwEY+tm58gOZJP4IGP60FX0DR7w2Mk8AMt3dHvZQkmJlgycEDrh3HPHkB7amdX4rxaDUZViacKsNk+wqwfbtnYA8yqk4G771TdppV3cTR3en3unCND9Uyqd6wj/BfHVcdQR1qsQXw1LXUuJI82FvMIl6BFYk7CR/mcZ+VA4X4Njk0e4vHXvb2OXvHWQHK92QzRkHqWUknPXIrRbfXdQu0QaZax28LKCs9x02n3Il5/Ov1eTx2GpXEkzItvdQGRgT/iRcn5eZKsPxxWN6dqN7BJDeSy3cWnzuYQVbmIQ2Qo90c+R+BxQapxJw9pyR7tbvJbiQghQ7YwT5xRJ0PzrHb3gl2jlvrcyNYIR9bJhZCu4K2F6kg8vLpWyaHpFtb659WBIs9oJUkdi7Aq3MhmyeYI6eyv3pNh3kesacw/xHaNeXqypuUj2DdmgiuCNKt9JsZ9SeJw0p+ojbnJsOBHH+djzP4/Cp/TVGm2U+oX+Dcy/WTc/vf4cK/AZAx+NRXA4l1M29xdIVgs1VI4yc95cKNrSkexcYFVntLvrnVbmaCwAe3sF7yXnykcdQPeI5gD4NQSuo9ml1f2zTyXaekXG2SRSgZFx6qI48SgA45cjUBw0kkuNNuIYZbywkzHFIcLPGAQYy3mVzuXPLFW7g3RbK9s0uLCa4tJSBvSCY4Rx1GxiRj9OlVTtD4cv9PuItWNys5jdFZgmx8DkN+OTZGVJ+NAvLNb6G7tu6HpLytKi26Zht2jXGwuPCXYAg488Ve+x3ik3lj3Ux+vt8RuD1IHJWPywfiKqV1dQwQ95Gb6Wz2C7SBNscS72zteQeJyH5bKj9NuzY67bXWBHDfqDIinKoz+sh+IfB/Wg3ulKUClKUClKUClKUClKUCqnxZ9sv5B+5qtlVPiz7ZfyD9zUFspSlApSlApSlApSlApSlAr+fLDV1N5qmrNKI9p7mBnTvPEx5KF8/AhH4NW2cXX3cWFzLnBWJ8H44wP7msQ4LaODT4WnuTB6RLLJ4rfvo3C4QbwR4eecHzzQS+pTrHp0upPp62dx3fdRtGwCyGUbS+xehC5Iz7a9OEOApv6NvmuzErj0hIwqqN45xmRzzYchy5YzVc4slF1DZ20ESRvc3DMxjBEcu0iNJFRuaDBPh+BrUJeGrK3RW1e8NyygBVmbagAGAFhTryHsNBVO0m/OqWmlwW4Rprlt3X1do2vz9mc/KoPTdXa3il0HW12RnwwzEZERzlWz5x55hvLnXEuirqGqXLaVOtukIDw7iUAOeYUHmgLZPSvXi3UtRW3MGt2izIBiK4XAZW8iJF5MPaD1oOjhvjaO0e0ivixkspZI96eINC646jqAcEDzBFWK27UdNTVpLkNL3U1uiu2w5DoxwMeYKnrWIaa0QlX0jvDFkbwhAbHwzyzV9j+jGOf8AUuftx4fkOdBMJ2m28GnXVtZCUSyTSmEkYASRs7vgQCeVR0GvyWtmuk6ape8uD/1EqYJ3N/hqfMgHBby51TOKTYd4P6d6Tsx4u/28z7Rjnj8a7OCdXvInaLTYlNxJyEgUNIF8wueSjzJoLAmhDSLh4NQUu89tugaJmBWU8gPCefi5Zq7cR6LqMcFtYJetOb1GjeO4UNswm5mVgMgDpzzVL4n4SvoIP6lqF4jXKOhWIuHbqCOecD8AK1fhu6F9qhu+RS3tYlU5+/KN7keXJeRoMw4VuIzps1rfQzTiyuVbuVk2g7z3eGz1UPjl8a7uPLN2s5ozZR2jWpjuYlikD+BzscsQcbtwU1y2eoqvENwxiD292JkAYeGQYPMe8N6V0cJXpaRbNbaCGC8RkYrulMjFGIBkPqlDjweVBsnBeri70+3uB1dBn8w5H+4qbrLf/D/ek2U9s2cwTH5N/wDYNalQKUpQKUpQKUpQKUpQKqfFn2y/kH7mq2VU+LPtl/IP3NQWylKUClKUClKUClKUClKUFH7aJ9ui3HL1ii/Nh/xXT2WQIdGtBycFMnI88nlz+NRPbyD/AEdsZ+1jz+HP/fFQvDnZ5eyWcDpq1zGrRqwRQcLkZwPF0oIvjyE3PE0FurtAIkXEqYygALlhnkMV1W3ESpM76RYPesDh765b1iOu1mwAPwxWZ8f2E1pqU0Mk8srgAGViQXVlHXn08v0qc4Kto3t1DpZSkEnbc3bRgAnyj5L+vOgr+qaTOszzX6yRiRmPeIAylyc4ypxjr51I3/DJWCbNy7FEEijd4HGQccz17shh+BHlXT2gRRxoqwnT48nxxWczyAjqGbPhGD7OfOvS6X/0yJZg7StbkhQMkASZhPwIXeSfdOKCr8NpYFz/AFBrlV5YMIU/jnP+1XSOy4X27jcX3Ly28z/aq9wYNHIYan6UrZyrRkbcezAGc/GtAgPCC8vEfzd6aDOeJotJCf8Ap73rPkfaqoUjz+OfKvXhLh5Zo2maWRSjc1j692AS7k+QztUe0tUxxXPw6EcWMN20mCFIchAfI+LJOD5Yrx4BiJtJihXnNGsg89u1jHu9kXe7cn24oIW+0gO7xQ9/LMpXcSRsUY8QLE9QSBk+w1dOFde1HTLV7eGG0nVtzeCQM4JGMkKcnGOlU/hK3DXUhuZIlCZZ1nWRo3YHBV+75gZyefnV21KG2aHZH/Qi7ck9FjmM2T027eefxoI22e1W50iZrx5I18DrtCvCytnacc8b26nyrZ2tbuGRhZ2dgIi5dSXIJLes2AMAn4V/LD2Mok7tkYPv2YPv5xtz7c1sY4IsExHNc6x3ihQ4RHK7sDOCExjPLOaDu7JJFh1jU7YldxbcMH3WO4D2jxda2CsK7J7BLfiK7gRpGWNJFUt1I3L6x8jW60ClKUClKUClKUClKUCqnxZ9sv5B+5qtlVPiz7ZfyD9zUFspSlApSlApSlApSlApSlBRe2q3L6LPg42lG/HDdP71w2erXx0uBLG1EsZs1+v74IUfBBAGMkjGeVWzjew7/TbqLON0L/2G7/asa0TXZv6Lbdzc3UTxmaERW6Bmkfk8efdGCcmg5NfaR9TsXntu/kubSNWjk5F5GDJuPukHB/Su3VeBL60lt7SFrW8MqsVjkjGUAA3HJ5rHnkDmvHjOKWC106+7q5jaCZlYXLZkYkiQNkfcJ3CrfY8ST20VxfXNjdtdXA3RlV3xrHgd2gZTlUGdx9poMkuLvdK1veIIhC32VvEACwYA7iOZG3P9ql7vWFdrmVor6MSKyZVOSRgeEDPJRgIp+GfbXrZcRS2WoyvatDfy3SAsdh5SsckBcZ5Hy9ldvFtnqZgefW74wq/qWqnLOfJQinaq56k0FG4VSwMp/qTXCx4GO5A6+ec88Y9laBbNwkqFT6U5P32D5H4YwP7VmOkG3Ey+liUw/eEZAb9CeVXyPVeGgmDZXhPTJfn884zQQXFJ0bYf6eL7vMjBkK7Mef8Amrr4Gv3jicC0nlRmKu8K5JRhhkJ9oIVl9hFQfE1xYO6/0+GeJRnd3rhi3sIx0qz9nulyzjGl6g1vdDm8LkgP/mQjk3xBGRQRt3qksEr3UKXdvc7l3ErhCMYbcCMc2wcHI5mrLoc+tXcZZlulhfHitreNWdSeYVwFx866OMdZ1t449Ivoot87KFlH3wD8OWM8ycVpen6brSQxxLLp0KooTwxu5wBgHmQM/Cgy7iKwHp2m6dFazWyiUPmVgzSFmBLsVz4vCatJ13VknmjeK52tceCRRnaTIAitgnZCY85yPOoDTpZp+Ip5LidZTZxSYlwI0VlXanwUd43zqWtbS4spIJ5LN4pESR7i5jm3x3CiNjh+fIliD/pQevZLJ32tapc7cZYjPsy55f8Ab/atgrKP/D5YEWlxdMDmaXAPtC//AGxrV6BSlKBSlKBSlKBSlKBVT4s+2X8g/c1WyqnxZ9sv5B+5qC2UpSgUpSgUpSgUpSgUpSg+MoIweYPIj4VgOjG4s7nUtNgd45A3fwmNQXIU5ZUBHMmNuQ/y1v8AWR9sdnJZ3drrFuDujYJLjzHln8RuX5UHi/A93PZXBkuHuEniMqtKW7wSIcxDYfVbbuBxX77LeMb+SyWGG0in9GxG477ZIR5Hawx8P0rt1Hi+S5nIFyba3Tu5IkhQvPcggN4fLu85U49mDVRv7ybS9VW7tcQ29/gsJ0OIyTl0cA5BVjn8DQSvalquUhuIrO6tby3kDqzQjaR5jemVIzjr8ag9K0lZrZte1qfvlye7hB5uwOFQ+SjP3R5czWl33FV7aqv9Qs4p4ZWEayWr7t5f1QI35nI881mnDfCa3Osm0/6qOyQm47icFTyONu3p18O72CgnezLhuyntLjVdSjgcOznay+GJV5nA8j5foKleEuDbB47jUry0gihly0UTjlFCo5OR5M3rfrXnZaZLdX95p23baJdd/OV6MCqmOEDyyRk/AVI9pGpyyt6HbW7TQwGOW9Cf+2CCIR7SQNxX2Cgob2OjXNtdSlo4ZpmPo0UcbkxKnJQVUes/U/iMV+eH+G4tStTLARZahZqA4HhVwo8MhHVG5YJ9vWtC4hjMK/1rSBHIDGO9hA8MsY6MMcw6/wCgql8ScN6peyJqNr3AF2qRP6KzHwMObSEjoOh9mKCK0ubUryOXWJbgBrBAsTbQQ56Hl0PIklvaRVo4/eazS2kuNQv5EmSQsoYIN4TMYG0cvEf7VJaVY7eFri3wqtGs6OR0LI/NvxIFQHadenUruy0u3wQqpJI/u7lBJJ8gE5n8aCO4CtGi02Sb0iGC4vnKxyTqShROb7iQVBLHkT7KcSq9jpc1qy3QnuZEQlpA8ci+uXiA5BSSBVm9OLTRxafIyxPGIIYr2D/pbgIOqMOe88zkjxVBaJp/p+s21rnvLfTkwzr6pcHccf5d+AB7FoNd4H0f0TT7e381QFvzHmf7mp2lKBSlKBSlKBSlKBSlKBVT4s+2X8g/c1WyqnxZ9sv5B+5qC2UpSgUpSgUpSgUpSgUpSgVw63pUd1byW8wykilT/sfxBwa7qUGG8CajPayy6RNL3UsDs0b7AztDgl44yejEYZfLOa84NKL2DQamGgS5md4JJ33TNMx+rO0eqm3Ab8atna9wjLMI9QseV1beLw+syjmMe1h/pmoTSeI7aW0utYIea8ULGInG4QuwwO7HkhbxZxy6UFX0XXLmJksL2eYS211B3cLAFWAfBG7G4YzuB8xWxarldcs2GMPb3CE+3BVgP96zjVuHZ720hkVZheQbO6uZwsRuTzYxKp8W5ceEt1xXVw/x415f6dDcxmK8gkkSUsMAgoQevRiccvbQWSbXo9PudXlkwAO5lUHqzMm1QPhlR/esPtOL9ShneeOWVGkk7xxjkzEZ8Q8/D5eytD7ZLFTrVkrtiOfuxIPIhXwM/oTUppVjGZ1VkTY1/eq45c17oqOfwUYoIHs77QjBdMlxGY4JPFKgHghdv8VR9yJs8x0Gc1atf0QWdxHIk90mlzsTKsD4WKR/VfI5iEk88cgTVK4dKjUNKJCATwvFKG6PHveNd2euUCjPwFXbWtcj0RHtLpTPaSIxtk5FlHQwOD1j58m9nKgihxFBYaFcxM3eM89zDCrHcXBbBYnzAznPnUdwVEuk2B1C7glnluCImQEZijYeHcDzy3L9CK5+zPs5kuW9Ouo1WEbnt4HztZjkqSOoiBx+OKsvoV3bPdDWBFJbXceZbiI4WJkGF5H73qhceYFBXNd1Nbey3LPegRSBbS0niCsj4zu3dXVAxA/ECtD7I+FTZWO6YHv5z3kmeoz6q/I5/E1SeBtGk1i/F/dd4bS2wkCyHJcrjGT58xuY+ZOK2+gUpSgUpSgUpSgUpSgUpSgVU+LPtl/IP3NVsqp8WfbL+QfuagtlKUoFKUoFKUoFKUoFKUoFKUoFZBx3wvPp11/V9JGF63EAHIj7xx5qfP2HmK1+vhFBh9zKdamjuWnuBbgjCxbR6IwB3mUMeY8xKPZiuW+Ntq0ywkos+8xW96h8chjUHdNGOexscnHSrDxb2fy2cz6jpAByD31oRlXQ+uoHmp935VEaHrFpcd60ESw3LRxwSWhwrrEAQ/o7tj6w7h4Tg8qCu8QtOkq22vbnCxlLe7j8WzxZD5H2g5YIPiFQc/GlzG7ojRspZyWGSGdo+6aRehGV549taDwxp0ytDZFE3TFmntJ0yO5jGBNjJ7uV+Q5HqM1XV4Osrm4lSNb22eJpN8ATvQdnMrG4+9gjwtQRvCVyl3KIGRHuZlWCEuCI7dAPXGOZfI5Y6Ek+dWuThgWt00mpNPqVzHH3myMbkiQclkk3EFuYyEHsq1dkb2Zkmjs7Xu1hRN0kw+vMjZyGyOQ5eXKuvtESC1m9O9PNpK0ZjdQoczJ5AIfvDyNBBdnl/JHqVzLezq6yWyzJNhgjR55EfdiAHh2fCozU7ifiS/7m3MkWnwes56Mc9cebHyHl1rk0zS7zWlht4Ue10yHlubq/nk++5yTgeEZrbdC0aG0gS3tkCxoOXtJ82J8yfbQeuladHbwpBAoWONQqj4f8+ea66UoFKUoFKUoFKUoFKUoFKUoFVPiz7ZfyD9zVbKqfFn2y/kH7moLZSlKBSlKBSlKBSlKBVV1jjy1g73wXEohJEjxR5RSOoL5AyMgY9pr99oXEwsbJ3XnO/ggXGcueQP4DOayDRtRWG7tbeWSVrQyo9xvP1clyfWcHHiQPtyM4yuaDfNMu++hjl2Om9Q21xhhnyI9tdVfFOeY5j4UoPtK+V9oI7X9XS0tpLmRXZIwCwQZbGQMgfrmqDq2haXrTg7Li2u2TejMmxnUcg2Ojjp8atHaLrUdtp1wWKl3jKJHuG5i3h5DqcZzj4VjmgG+ijt7pfSDd2wOyKYHE1pjxCIHqV55HXBB8qCbluNc0ckSxC7gVdonVcuE9gf11x1wcgGpvs/460e3s+7FzIrBnkf0geNmY5PNRhj5VoXD+sxXlslzASY5B0PUHoVI9oNROr9numXMgkmtY92ckrlc/iFwDQZhNxhNdajNNoFrK00qBHmk6BR5hfVXy5sSeVSkHZ/FC6XuvTyXU8jhVhXLbnPMIPN+h5DArWbCwhgTZBHHEg8kAA/tWNcVa4+o3nexGX0a2Yx2oj5PPdY5bPPAxknoFHxoNK4S4lF088K2s1utuVTx7QMkZ2hV6YGD+tWWsi7KddNo1xbaozQyvIJRJP4d7MMMATyPT2+da1FIrDKlWHtBB/wBKD90pimKBVBl4v1FLi4he0tiYAz7e8KtLCMnvI8jaemCM8jV2vL6KIbpZI0HtdgP9TWVceyS6ndW40xJZkgDlpFGInYkfVl2wCuAQcZ60Gl8Pa1FeW0dzAco4z8QfNT8QakqyPso1QxajdWIjKxyFpQn/ALLqcPGefJefI+eBWuUClKUClKUClKUCqnxZ9sv5B+5qtlVPiz7ZfyD9zUFspSlApSlApSlApSlBR+1yBGsV3xknvECzAE+j5I3S+HxY256VUO0u+QW1lb2G6S0VckxKHVwMDmQCdw5sQcZrZjVe1Pgqxm5913T5zvgJjb/t5fMUGbWOsWjvPDbLdQwRQNPFJFK8ZmZB48BiQE8sY8q6+HOLLifukW41FDO5WIyJEy+FN5wcAt+NWO84GuQAILuOQBGjC3cIfCN1UMuCAfOumLhq5zbvMtk72wYQ92ZI1UFduNuSCP8ASgotpx5cyQXE3pV8Ftyocrbw5yzbQBk8jX4n1+5ltUvFkvZ4O+7oGSdYRvLgKGWNclfbzGKlrXs0mUOEtrOPeVLE3EzZ2tuBIxzORnnU1qfDd8lvMsQ00R+ObuVgZt0gG4Ebm5HIoKrxHC/fXkaRQx3/AHtsYpI9zFUkxltzZwARgty5VJ8RcUwy6eYtQyl/HkRi1be4cDAcFPUVvME8wajFs3mFlLdXCzyXas2Zj3UCBFyY3EeC7Z5YJ5belJ7+SG72oVgkaSNbeOFVFvLAV+scyYG77x3E5BAoLBwdxOLbTreGPT73cqgOAgVN56ne5AOetTR4svP/AOXOuSAvezRpuJ8hk8z8Kz+bVXfS1spfRIxEyskk0+7vNku5eSbjjHIk+2uTiniGXUAhe6t4zAe8jWBJWXvARt3Er0ABw3xoNHj45l3tHJp1zvXk6xvE5B9m0Nk8vhVL4F1CytL24mvYZ7Rmkf0cSo3dxI3rYbmFYnr8q85Z9Pe6urpHsRIbf6kAur+kYJZySBt8TEZ+Arz1Gyf0eyjiljaNbV4rt45O97kEhy4QHLPjdjl1NBI394Lu+n7yWaUqwks0iQSwSRBcsGHNck5Uk8xyxVetNUi2BO4hJmVCpt3kiS3kkfb3cxDY5dc9fKrJwpYw3tzcJPbCz7qOKSB4mMUvdsDh3KnacgBjkedfjg7RZr2C6WHUcwid0CvDG3ery8cgwDz54PwzQQmoaultDnfeORJLHILe7fb9XjxjeCQCSM86mba0aYSJmVpY7aK6Tv7uVlw4JZWC4PLHI/Gp5OCb5FWNJNKKIGVd1qcgNjcOTY54GTXXb8Kah3neNeWkblBGxhtRnYOigsT/AHoKVLbSyRWNz3VoXvFlQYjZ9rMn1ZZnJwQ3U+XWpThbWWspla8le3hFuqSQzSB2ecHm8KKSQOR/HNWhOAQ4xd3t7MB0UMIlA9gWMDlU3pfDFlb47i2hQjo23Lf/ACOTQVzhXfPqc19BbyQ20sQV2lAVpZFPhdV9YLt5ZPWr1SlApSlApSlApSlAqp8WfbL+QfuarZVT4s+2X8g/c1BbKUpQKUpQKUpQKV8pQfaUpQKUr5Qfa4dct5JLaaOBykjRsEYdQxHL8K7qUH82JqEsOmrAFidWmaKSKdQ7RXI+8mT6jdfgc1sWndntptRrwNdShRzmYlQcdET1VXyAAqJ4p4CZr2W8toLecTRlZIZHKMHyPrI2wQr8hz+FWjgj00WarqShZ1JXIYNuUeqSV5bvL9M0Epb6ZBGoWOGFVHQKigf6V0JEo6Ko/ACv3Sg8HtIz1jjP4qP+KhtR4K0+Y5e2jVvfjGxh+qYqwV+Jc7TtIDYOCemfLPwzQfz3c6zLbzXdpezyPHAWHTJnKkGK3MmNwTnkqTzwcVqfZhoksVu91dcri7IkkUAAIuMIgA5ABfKo3RuzebJ9PvBNG0wuHjSMDdKDyLOfEV8ttaNQKV8r7QKUpQKUpQKUpQKUpQKUpQKqfFn2y/kH7mq2VU+LPtl/IP3NQWylKUClKUClKUGR8c8RzR64tq2ovZWxgVywVSA3i9o88Vc7TV1tNNFxJcTXynJSRUy8m71VVVHwPM1w3fCMsmvLfsIWtxB3ZVubbsH7pGMc+td/aBoNxdae1vYyCF9ykYJUFR1TK+qOh/Sg4NF7RElvVsp7We3ldGZd7K3QEkHacryDdfZXND2pwyO5htLuW2SQI1yi5QZ+9tHiI/DyqH4c7O7qLUba6eOziRInSQQu5Ykq67yX5u53Ak8q6OHOE9YsA9pZz2gtml3rM4zIinG7wY2k4AGCfL40Frh4wibU/wCnLG+7uRMJMjaQQDjHXPOqNxd2jSTab6RYmW2ZLxYGJKkkbST5Hl0+VTmrcK6gusrqNm1q+6ERP3xYY6AthevTOBj2VWz2Y3/9Me1LW/eNeifIc7dmzb7vXPlQTOi8a3smuzWbQSmFAFCqFGwEr9c58x5jHk1fOJe0mLvWWD0nubaVe/lhMY3Y6p4zu256lRzxipC14YvYNclvofRnguFRZA7MHQAKG2gDBPg5fjVauey66jubgwR6dPFO+9ZLlSXiJOWwAMN1PI8jyoNbsb2OaJJomDRuoZWHQg881lnHPaaWsp209blFWRY47tVHdswILLz5r4ScEjnWn6XYCG3jgGMIgTKqFHTHJRyUfCsovezbUlsrjTraS1Nu8veq7kiR+a+BuWExjOR1x8aC0XnaBHbrawd3JcXMkCSOqsq4BQHcS5C5JzyFfqXtPtBpxvgshxIImiGNyyHJ2k+rjAJz0qD4l7N7iSe1uoVtJmjgjhlguM92diYypAz1z/apS24MmTSpLbudOeWVgzxbCkQHTCsvi3gYw59lBY+HuIHuXdWtnjCgESB0kjf2gOh9YZHI1WO1riS5tDbLG8kFvIx765jTcyY6IAeXPr+lfrs54Knsbu4k8MNtIqhLcSmTxcsuWIHPkfLo3wqW470W+m7qTT51Vo28UEuO6lGc+LkeY/8A2DQRHZfxJNLBcNdXcFxDFl1nziQLzJEiY8OAM/Mc69tM7T4pmDLaXgtmkMQutuUz5EqPEB8fKvPgzgB4VvnuTFG96GQxW/NIlOfVLDJPiJx0rn4U4b1qzRLJJ7NbVJGImA3SmMknbsI25JPXyzQdtjxSiarqKTz3HdW0YdlcJ3aDwc02+Mnn5+01+NJ7U7eWWFJIJYY5yVildkIY5wAVUllz8a8n4Bmlv9UlldFgvYhGhU5cHwcypGPunzqH4V7NrqKSBbiHTBHC24zqm6aTByo8Qwp/zdaCfuu0xVku447K6lNo5WVkK7QBuyxJPIeHp/xXvf8AaZax2dtcrHNI919lAo8ZIO1vhgHlnz5VwWPBN0r6yWMP/Xbu58R89+N3Ll6w9tRz9nV6tlpzQSQreWJYhWOY2DOW64znp5e2gt2m8bQtDPJcxT2pt+cqSqcgeRBAw2TywPOorRe1CCaaGKWCWBbjlDI7IQx5YBCklc58/Ouw6Df3lndQanNCnfjakcC5WIAgg7j4nJIHI+VVjhHs6uoZbcXEOmKkB3GaNN0smDlR4uSn/MOdBYP/ADGV554ba1lmMEgjbEkauzZIOxGO58EHpV2ifKg4IyAcHkRnyI8jWU8a9nlzd3Es0UFpHMXQxXMczoQAclnjwQZMctwI6ZrU7KJliRXbeyqoZ/eIABb9TzoPalKUClKUCqnxZ9sv5B+5qtlVPiz7ZfyD9zUFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFspVT+k83uxfJv5U+k83uxfJv5UFsqp8WfbL+Qfuan0nm92L5N/Kq7xHr8jSqSsfqDyPtb/NQf//Z";
+const LOGO_RATIO = 236/284; // hauteur/largeur du logo original
+
+
+function noteToPoint(note){
+  if(note === null || note === undefined || isNaN(note)) return 0;
+  if(note < 35) return 0;
+  if(note < 40) return 1;
+  if(note < 45) return 1.3;
+  if(note < 50) return 1.7;
+  if(note < 55) return 2;
+  if(note < 60) return 2.3;
+  if(note < 65) return 2.7;
+  if(note < 70) return 3;
+  if(note < 75) return 3.3;
+  if(note < 80) return 3.7;
+  return 4;
+}
+
+function ueStatus(note){
+  if(note === null || note === undefined || isNaN(note)) return null;
+  if(note < 35) return "ECHEC";
+  if(note < 50) return "CANT";
+  return "CA";
+}
+
+let uidCounter = 1;
+function nextId(){ return "ue" + (uidCounter++); }
+
+/* ============================================================
+   ETAT
+   ============================================================ */
+let state = {
+  studentName:"",
+  theme:"light",
+  activeTab:"S1", // S1 | S2 | ANNUELLE
+  semesters:{
+    S1:[ makeUE("UE 1") ],
+    S2:[ makeUE("UE 1") ]
+  }
+};
+
+function makeUE(name){
+  return { id: nextId(), name: name || "Nouvelle UE", credit: 3, note: null };
+}
+
+/* ============================================================
+   PERSISTANCE LOCALE
+   ============================================================ */
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){ console.warn("Sauvegarde impossible", e); }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(parsed && parsed.semesters){
+      state = parsed;
+      // recalibrer le compteur d'ids pour éviter les collisions
+      let maxId = 0;
+      ["S1","S2"].forEach(s=>{
+        (state.semesters[s]||[]).forEach(u=>{
+          const n = parseInt((u.id||"ue0").replace("ue",""),10);
+          if(!isNaN(n)) maxId = Math.max(maxId,n);
+        });
+      });
+      uidCounter = maxId+1;
+    }
+  }catch(e){ console.warn("Lecture localStorage impossible", e); }
+}
+
+/* ============================================================
+   CALCULS
+   ============================================================ */
+function computeSemester(ueList){
+  let sumPointsCredits = 0, sumCredits = 0;
+  let sumNotesCredits = 0; // pour la moyenne classique /20
+  let creditsValid = 0, creditsInvalid = 0;
+  let countCA=0, countCANT=0, countECHEC=0;
+  let hasFailure = false;
+
+  ueList.forEach(u=>{
+    const credit = Number(u.credit) || 0;
+    const note = (u.note === null || u.note === "" || u.note === undefined) ? null : Number(u.note);
+    if(note === null || isNaN(note)) return; // UE non notée : ignorée dans les calculs
+    const point = noteToPoint(note);
+    const status = ueStatus(note);
+    sumPointsCredits += point * credit;
+    sumNotesCredits += note * credit;
+    sumCredits += credit;
+    if(status === "CA"){ countCA++; creditsValid += credit; }
+    if(status === "CANT"){ countCANT++; creditsInvalid += credit; }
+    if(status === "ECHEC"){ countECHEC++; creditsInvalid += credit; hasFailure = true; }
+  });
+
+  const mgp = sumCredits > 0 ? Math.round((sumPointsCredits / sumCredits) * 100) / 100 : 0;
+  const moyenne20 = sumCredits > 0 ? Math.round(((sumNotesCredits / sumCredits) / 5) * 100) / 100 : 0;
+  let status;
+  if(ueList.length === 0){
+    status = "VIDE";
+  } else if(hasFailure){
+    status = "ECHEC_SCOLAIRE";
+  } else if(mgp >= 2){
+    status = "ADMIS";
+  } else {
+    status = "AJOURNE";
+  }
+
+  return { mgp, moyenne20, creditsValid, creditsInvalid, countCA, countCANT, countECHEC, hasFailure, status, totalCredits: sumCredits };
+}
+
+function getCombinedUE(){
+  return [...state.semesters.S1, ...state.semesters.S2];
+}
+
+function getActiveUEList(){
+  if(state.activeTab === "ANNUELLE") return getCombinedUE();
+  return state.semesters[state.activeTab];
+}
+
+function getActiveComputed(){
+  return computeSemester(getActiveUEList());
+}
+
+/* ============================================================
+   RENDU : ONGLETS
+   ============================================================ */
+function renderTabs(){
+  const tabs = document.getElementById("tabs");
+  const defs = [
+    {key:"S1", label:"Semestre 1"},
+    {key:"S2", label:"Semestre 2"},
+    {key:"ANNUELLE", label:"Vue annuelle"}
+  ];
+  tabs.innerHTML = defs.map(d=>{
+    const list = d.key === "ANNUELLE" ? getCombinedUE() : state.semesters[d.key];
+    const credits = list.reduce((s,u)=>s+(Number(u.credit)||0),0);
+    return `<button class="tab-btn ${state.activeTab===d.key?'active':''}" data-tab="${d.key}">
+      <span>${d.label}</span><span class="credit-pill">${credits} cr.</span>
+    </button>`;
+  }).join("");
+  tabs.querySelectorAll(".tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.activeTab = btn.dataset.tab;
+      renderAll();
+    });
+  });
+}
+
+/* ============================================================
+   RENDU : TABLEAU DES UE
+   ============================================================ */
+function renderTable(focusInfo){
+  const body = document.getElementById("ueTableBody");
+  const readOnly = state.activeTab === "ANNUELLE";
+  const list = getActiveUEList();
+
+  if(list.length === 0){
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:26px;">Aucune UE. Cliquez sur "Ajouter une UE" pour commencer.</td></tr>`;
+  } else {
+    body.innerHTML = list.map(u=>{
+      const note = (u.note === null || u.note === undefined) ? "" : u.note;
+      const point = (u.note === null || u.note === undefined || isNaN(Number(u.note))) ? "—" : noteToPoint(Number(u.note)).toFixed(1);
+      const status = (u.note === null || u.note === undefined || isNaN(Number(u.note))) ? null : ueStatus(Number(u.note));
+      const statusHtml = status ? `<span class="status-pill ${status.toLowerCase()}">${status}</span>` : `<span class="status-pill" style="background:var(--bg-3);color:var(--text-muted);">—</span>`;
+      const dis = readOnly ? "disabled" : "";
+      return `<tr data-id="${u.id}">
+        <td><input type="text" value="${escapeHtml(u.name)}" data-field="name" ${dis}></td>
+        <td><input type="text" inputmode="numeric" value="${u.credit}" data-field="credit" ${dis}></td>
+        <td><input type="text" inputmode="decimal" value="${note}" data-field="note" placeholder="—" ${dis}></td>
+        <td><span class="point-pill">${point}</span></td>
+        <td>${statusHtml}</td>
+        <td>${readOnly ? "" : `<button class="row-del" data-del="${u.id}" title="Supprimer">✕</button>`}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  // Bind editing events
+  if(!readOnly){
+    body.querySelectorAll("input").forEach(input=>{
+      input.addEventListener("input", (e)=>{
+        const tr = e.target.closest("tr");
+        const id = tr.dataset.id;
+        const field = e.target.dataset.field;
+        const ue = state.semesters[state.activeTab].find(u=>u.id===id);
+        if(!ue) return;
+
+        const rawValue = e.target.value;
+        // Ne PAS re-formater/clamp la valeur brute pendant la saisie (sinon le curseur saute) :
+        // on stocke la valeur telle quelle, et on ne clamp qu'à la sortie du champ (blur).
+        if(field === "name") ue.name = rawValue;
+        if(field === "credit"){
+          const cleaned = rawValue.replace(/[^0-9]/g,"");
+          ue.credit = cleaned === "" ? "" : parseInt(cleaned,10);
+        }
+        if(field === "note"){
+          const cleaned = rawValue.replace(/[^0-9.]/g,"");
+          ue.note = cleaned === "" ? null : (isNaN(parseFloat(cleaned)) ? null : cleaned);
+        }
+        saveState();
+
+        // Sauvegarder la position du focus/curseur pour la restaurer après le re-rendu
+        const focusInfo = { id, field, start:e.target.selectionStart, end:e.target.selectionEnd };
+        renderTable(focusInfo);
+        renderHeroAndStats();
+        renderCharts();
+        renderTabs();
+        renderSimulatorOptions();
+      });
+
+      input.addEventListener("blur", (e)=>{
+        const tr = e.target.closest("tr");
+        const id = tr.dataset.id;
+        const field = e.target.dataset.field;
+        const ue = state.semesters[state.activeTab].find(u=>u.id===id);
+        if(!ue) return;
+        // Normalisation/clamp final à la sortie du champ
+        if(field === "credit"){
+          let v = parseInt(ue.credit,10);
+          if(isNaN(v)) v = 1;
+          ue.credit = Math.max(1, Math.min(MAX_CREDIT_UE, v));
+        }
+        if(field === "note" && ue.note !== null){
+          let v = parseFloat(ue.note);
+          ue.note = isNaN(v) ? null : Math.max(0, Math.min(100, v));
+        }
+        saveState();
+        renderTable();
+        renderHeroAndStats();
+        renderCharts();
+        renderTabs();
+        renderSimulatorOptions();
+      });
+    });
+    body.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", (e)=>{
+        const id = e.target.dataset.del;
+        state.semesters[state.activeTab] = state.semesters[state.activeTab].filter(u=>u.id!==id);
+        saveState();
+        renderAll();
+        showToast("UE supprimée");
+      });
+    });
+  }
+
+  // Add-button + credit warning
+  const addBtn = document.getElementById("btnAddUE");
+  addBtn.disabled = readOnly || state.semesters[state.activeTab].length >= MAX_UE;
+  addBtn.style.display = readOnly ? "none" : "flex";
+
+  const totalCredits = list.reduce((s,u)=>s+(Number(u.credit)||0),0);
+  const warnEl = document.getElementById("creditWarning");
+  if(!readOnly && totalCredits > MAX_CREDIT_SEMESTRE){
+    warnEl.innerHTML = `<span class="warn">⚠ ${totalCredits} crédits saisis — le maximum recommandé est de ${MAX_CREDIT_SEMESTRE} par semestre.</span>`;
+  } else {
+    warnEl.textContent = `${totalCredits} crédit(s) au total`;
+  }
+
+  // Restaurer le focus et la position du curseur après reconstruction du tableau,
+  // pour que la saisie reste fluide (pas besoin de recliquer après chaque lettre).
+  if(focusInfo){
+    const el = body.querySelector(`tr[data-id="${focusInfo.id}"] input[data-field="${focusInfo.field}"]`);
+    if(el){
+      el.focus();
+      if(typeof focusInfo.start === "number"){
+        try{ el.setSelectionRange(focusInfo.start, focusInfo.end); }catch(err){}
+      }
+    }
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ============================================================
+   RENDU : HERO (SCEAU) + STATS
+   ============================================================ */
+function renderHeroAndStats(){
+  const c = getActiveComputed();
+  document.getElementById("pageTitle").textContent =
+    state.activeTab === "S1" ? "Semestre 1" : state.activeTab === "S2" ? "Semestre 2" : "Vue annuelle";
+  document.getElementById("chartsScope").textContent =
+    state.activeTab === "S1" ? "Semestre 1" : state.activeTab === "S2" ? "Semestre 2" : "Vue annuelle";
+
+  // Gauge
+  const circumference = 2 * Math.PI * 74;
+  const ratio = Math.max(0, Math.min(1, c.mgp / 4));
+  const arc = document.getElementById("gaugeArc");
+  arc.setAttribute("stroke-dasharray", circumference.toFixed(1));
+  arc.setAttribute("stroke-dashoffset", (circumference * (1 - ratio)).toFixed(1));
+  arc.style.stroke = c.status === "ECHEC_SCOLAIRE" ? "var(--brick)" : c.status === "ADMIS" ? "var(--forest)" : "var(--amber)";
+  document.getElementById("mgpValue").textContent = c.mgp.toFixed(2);
+
+  // Status badge
+  const badge = document.getElementById("statusBadge");
+  const meta = document.getElementById("statusMeta");
+  badge.classList.remove("admis","ajourne","echec");
+  if(c.status === "VIDE"){
+    badge.textContent = "EN ATTENTE DE SAISIE";
+    badge.classList.add("ajourne");
+    meta.textContent = "Ajoutez au moins une UE pour lancer le calcul.";
+  } else if(c.status === "ECHEC_SCOLAIRE"){
+    badge.innerHTML = "⚠ ÉCHEC SCOLAIRE";
+    badge.classList.add("echec");
+    meta.innerHTML = "Au moins une UE a une note <b>strictement inférieure à 35/100</b>. L'échec scolaire est déclaré automatiquement, quelle que soit la MGP.";
+  } else if(c.status === "ADMIS"){
+    badge.textContent = "ADMIS";
+    badge.classList.add("admis");
+    meta.innerHTML = `Aucune UE en dessous de 35/100 et MGP ≥ 2.00. <b>Condition d'admission remplie.</b>`;
+  } else {
+    badge.textContent = "AJOURNÉ";
+    badge.classList.add("ajourne");
+    meta.innerHTML = `Aucune UE en échec, mais la MGP (<b>${c.mgp.toFixed(2)}</b>) est inférieure à 2.00.`;
+  }
+  document.getElementById("metaValid").textContent = c.creditsValid;
+  document.getElementById("metaInvalid").textContent = c.creditsInvalid;
+
+  // Stat cards
+  document.getElementById("statMgp").textContent = c.mgp.toFixed(2);
+  document.getElementById("statValid").textContent = c.creditsValid;
+  document.getElementById("statInvalid").textContent = c.creditsInvalid;
+  document.getElementById("statCA").textContent = c.countCA;
+  document.getElementById("statCANT").textContent = c.countCANT;
+  document.getElementById("statECHEC").textContent = c.countECHEC;
+}
+
+/* ============================================================
+   RENDU : GRAPHIQUES (Chart.js)
+   ============================================================ */
+let charts = {};
+function chartTextColor(){
+  return getComputedStyle(document.body).getPropertyValue('--text').trim() || "#1B2333";
+}
+function chartGridColor(){
+  return getComputedStyle(document.body).getPropertyValue('--border').trim() || "#D8CFB8";
+}
+function palette(){
+  return {
+    gold: getComputedStyle(document.body).getPropertyValue('--accent').trim(),
+    forest: "#2F6F4E",
+    amber: "#B9791F",
+    brick: "#A8402C",
+    teal: "#1F5C57"
+  };
+}
+
+function renderCharts(){
+  const list = getActiveUEList().filter(u=>u.note !== null && u.note !== undefined && !isNaN(Number(u.note)));
+  const pal = palette();
+  const textColor = chartTextColor();
+  const gridColor = chartGridColor();
+  Chart.defaults.color = textColor;
+  Chart.defaults.font.family = "'Work Sans', sans-serif";
+
+  // 1. Répartition des notes (bar)
+  destroyChart("notes");
+  charts.notes = new Chart(document.getElementById("chartNotes"), {
+    type:"bar",
+    data:{
+      labels: list.map(u=>u.name),
+      datasets:[{ label:"Note /100", data:list.map(u=>Number(u.note)),
+        backgroundColor: list.map(u=>{
+          const s = ueStatus(Number(u.note));
+          return s==="ECHEC"?pal.brick:s==="CANT"?pal.amber:pal.forest;
+        }), borderRadius:6 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ beginAtZero:true, max:100, grid:{color:gridColor} }, x:{ grid:{display:false} } },
+      plugins:{ legend:{display:false} }
+    }
+  });
+
+  // 2. Répartition des crédits (doughnut)
+  destroyChart("credits");
+  const creditColors = ["#C6A15B","#1F5C57","#B9791F","#2F6F4E","#A8402C","#8592C6","#D8A3C4","#7EAF9E","#C97A2B","#5C6478","#E4C687","#233163"];
+  charts.credits = new Chart(document.getElementById("chartCredits"), {
+    type:"doughnut",
+    data:{ labels: getActiveUEList().map(u=>u.name),
+      datasets:[{ data:getActiveUEList().map(u=>Number(u.credit)||0), backgroundColor:creditColors, borderWidth:2, borderColor: getComputedStyle(document.body).getPropertyValue('--surface').trim() }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, font:{size:10} } } } }
+  });
+
+  // 3. Évolution MGP S1 -> S2
+  destroyChart("evolution");
+  const s1 = computeSemester(state.semesters.S1);
+  const s2 = computeSemester(state.semesters.S2);
+  charts.evolution = new Chart(document.getElementById("chartEvolution"), {
+    type:"line",
+    data:{ labels:["Semestre 1","Semestre 2"],
+      datasets:[{ label:"MGP", data:[s1.mgp, s2.mgp], borderColor: pal.gold, backgroundColor: pal.gold+"33",
+        fill:true, tension:.35, pointRadius:5, pointBackgroundColor: pal.gold }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ min:0, max:4, grid:{color:gridColor} }, x:{ grid:{display:false} } },
+      plugins:{ legend:{display:false} } }
+  });
+
+  // 4. Distribution des statuts
+  destroyChart("status");
+  const c = getActiveComputed();
+  destroyChart("status");
+  charts.status = new Chart(document.getElementById("chartStatus"), {
+    type:"pie",
+    data:{ labels:["CA","CANT","ÉCHEC"], datasets:[{ data:[c.countCA, c.countCANT, c.countECHEC],
+      backgroundColor:[pal.forest, pal.amber, pal.brick] }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{boxWidth:10} } } }
+  });
+}
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+
+/* ============================================================
+   SIMULATEUR
+   ============================================================ */
+function renderSimulatorOptions(){
+  const sel = document.getElementById("simUeSelect");
+  const list = state.activeTab === "ANNUELLE" ? getCombinedUE() : state.semesters[state.activeTab];
+  sel.innerHTML = list.map(u=>`<option value="${u.id}">${escapeHtml(u.name)} (actuelle: ${u.note ?? "—"})</option>`).join("") ||
+    `<option value="">Aucune UE disponible</option>`;
+  document.getElementById("simResult").style.display = "none";
+}
+
+function runSimulation(){
+  const ueId = document.getElementById("simUeSelect").value;
+  const rawNote = document.getElementById("simNote").value;
+  if(!ueId || rawNote === ""){ showToast("Sélectionnez une UE et une note"); return; }
+  let newNote = parseFloat(rawNote);
+  if(isNaN(newNote)){ showToast("Note invalide"); return; }
+  newNote = Math.max(0, Math.min(100, newNote));
+
+  const sourceList = state.activeTab === "ANNUELLE" ? getCombinedUE() : state.semesters[state.activeTab];
+  const simulatedList = sourceList.map(u => u.id === ueId ? {...u, note:newNote} : {...u});
+  const before = computeSemester(sourceList);
+  const after = computeSemester(simulatedList);
+
+  document.getElementById("simResult").style.display = "grid";
+  const mgpEl = document.getElementById("simMgp");
+  mgpEl.textContent = after.mgp.toFixed(2);
+  mgpEl.className = "value " + (after.mgp > before.mgp ? "up" : after.mgp < before.mgp ? "down" : "");
+
+  const validEl = document.getElementById("simValid");
+  validEl.textContent = after.creditsValid;
+  validEl.className = "value " + (after.creditsValid > before.creditsValid ? "up" : after.creditsValid < before.creditsValid ? "down" : "");
+
+  const statusLabel = {VIDE:"—", ECHEC_SCOLAIRE:"ÉCHEC SCOLAIRE", ADMIS:"ADMIS", AJOURNE:"AJOURNÉ"};
+  const statusEl = document.getElementById("simStatus");
+  statusEl.textContent = statusLabel[after.status];
+  statusEl.className = "value " + (after.status==="ADMIS"?"up":after.status==="ECHEC_SCOLAIRE"?"down":"");
+}
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function applyTheme(){
+  document.body.setAttribute("data-theme", state.theme);
+  document.getElementById("themeLabel").textContent = state.theme === "light" ? "Mode clair" : "Mode sombre";
+}
+function toggleTheme(){
+  state.theme = state.theme === "light" ? "dark" : "light";
+  applyTheme();
+  saveState();
+  renderCharts(); // recolor charts to match theme
+}
+
+/* ============================================================
+   ACTIONS GLOBALES
+   ============================================================ */
+function addUE(){
+  const list = state.semesters[state.activeTab];
+  if(!list || list.length >= MAX_UE) return;
+  list.push(makeUE("UE " + (list.length+1)));
+  saveState();
+  renderAll();
+}
+
+function resetAll(){
+  if(!confirm("Réinitialiser toutes les données (S1, S2 et paramètres) ? Cette action est irréversible.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = {
+    studentName:"",
+    theme: state.theme,
+    activeTab:"S1",
+    semesters:{ S1:[ makeUE("UE 1") ], S2:[ makeUE("UE 1") ] }
+  };
+  document.getElementById("studentName").value = "";
+  saveState();
+  renderAll();
+  showToast("Toutes les données ont été réinitialisées");
+}
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* ============================================================
+   EXPORT PDF
+   ============================================================ */
+/* ---- Palette PDF (indépendante du thème écran, toujours "papier officiel") ---- */
+const PDF_COLORS = {
+  gold: [198,161,91],
+  goldDark: [154,122,64],
+  ink: [16,25,46],
+  teal: [31,92,87],
+  forest: [47,111,78],
+  amber: [185,121,31],
+  brick: [168,64,44],
+  greyLine: [200,193,170],
+  textMuted: [92,100,120]
+};
+
+/* Tronque un texte pour qu'il tienne dans une largeur donnée (évite tout chevauchement/texte coupé) */
+function fitText(doc, text, maxWidth){
+  text = String(text);
+  if(doc.getTextWidth(text) <= maxWidth) return text;
+  let t = text;
+  while(t.length > 1 && doc.getTextWidth(t + "…") > maxWidth){
+    t = t.slice(0, -1);
+  }
+  return t + "…";
+}
+
+/* Filigrane discret basé sur le vrai logo UY1 (jamais de gêne à la lecture) */
+function drawWatermark(doc, pageW, pageH){
+  const w = 260, h = w * LOGO_RATIO;
+  doc.saveGraphicsState();
+  doc.setGState(new doc.GState({ opacity: 0.055 }));
+  doc.addImage(LOGO_DATA_URI, "JPEG", (pageW - w)/2, (pageH - h)/2, w, h);
+  doc.restoreGraphicsState();
+}
+
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+  const pageW = 595.28, pageH = 841.89;
+  const marginX = 50;
+  const contentRight = pageW - marginX;
+  const c = getActiveComputed();
+  const list = getActiveUEList();
+  const label = state.activeTab === "S1" ? "Semestre 1" : state.activeTab === "S2" ? "Semestre 2" : "Vue annuelle";
+  const student = (document.getElementById("studentName").value || "Non renseigné");
+  const statusLabel = {VIDE:"—", ECHEC_SCOLAIRE:"ÉCHEC SCOLAIRE", ADMIS:"ADMIS", AJOURNE:"AJOURNÉ"};
+  const statusColor = c.status==="ECHEC_SCOLAIRE" ? PDF_COLORS.brick : c.status==="ADMIS" ? PDF_COLORS.forest : PDF_COLORS.amber;
+
+  // --- Filigrane (logo réel, très légère opacité) ---
+  drawWatermark(doc, pageW, pageH);
+
+  // --- Bandeau supérieur or ---
+  doc.setFillColor(...PDF_COLORS.gold);
+  doc.rect(0, 0, pageW, 6, "F");
+
+  // --- En-tête bilingue ---
+  let y = 32;
+  doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(...PDF_COLORS.ink);
+  doc.text("RÉPUBLIQUE DU CAMEROUN", marginX, y);
+  doc.setFont("times","italic"); doc.setFontSize(7.5); doc.setTextColor(...PDF_COLORS.textMuted);
+  doc.text("Paix – Travail – Patrie", marginX, y+11);
+
+  doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(...PDF_COLORS.ink);
+  doc.text("REPUBLIC OF CAMEROON", contentRight, y, { align:"right" });
+  doc.setFont("times","italic"); doc.setFontSize(7.5); doc.setTextColor(...PDF_COLORS.textMuted);
+  doc.text("Peace – Work – Fatherland", contentRight, y+11, { align:"right" });
+
+  // --- Logo officiel, centré ---
+  y += 20;
+  const logoW = 64, logoH = logoW * LOGO_RATIO;
+  doc.addImage(LOGO_DATA_URI, "JPEG", (pageW - logoW)/2, y, logoW, logoH);
+  y += logoH + 12;
+
+  doc.setFont("times","bold"); doc.setFontSize(18); doc.setTextColor(...PDF_COLORS.ink);
+  doc.text("UNIVERSITÉ DE YAOUNDÉ I", pageW/2, y, { align:"center" });
+  y += 15;
+  doc.setFont("times","normal"); doc.setFontSize(9.5); doc.setTextColor(...PDF_COLORS.teal);
+  doc.text("THE UNIVERSITY OF YAOUNDÉ I  •  FACULTÉ DES SCIENCES", pageW/2, y, { align:"center" });
+  y += 20;
+
+  doc.setDrawColor(...PDF_COLORS.greyLine); doc.setLineWidth(0.6);
+  doc.line(marginX, y, contentRight, y);
+  y += 26;
+
+  // --- Titre du document, encadré ---
+  doc.setFillColor(...PDF_COLORS.teal);
+  doc.roundedRect(marginX, y, contentRight - marginX, 30, 3, 3, "F");
+  doc.setFont("times","bold"); doc.setFontSize(12.5); doc.setTextColor(255,255,255);
+  doc.text("RELEVÉ DE MOYENNE GÉNÉRALE PONDÉRÉE (MGP)", pageW/2, y + 20, { align:"center" });
+  y += 54;
+
+  // --- Bloc informations étudiant (cellules empilées : label au-dessus de la valeur) ---
+  const infoBoxH = 62;
+  doc.setDrawColor(...PDF_COLORS.greyLine); doc.setLineWidth(0.6);
+  doc.setFillColor(250,248,242);
+  doc.roundedRect(marginX, y, contentRight - marginX, infoBoxH, 4, 4, "FD");
+
+  const cellW = (contentRight - marginX - 32) / 2;
+  const cell1X = marginX + 16;
+  const cell2X = marginX + 16 + cellW;
+  const rowLabelY = y + 20;
+  const rowValueY = y + 38;
+
+  doc.setFont("times","bold"); doc.setFontSize(8.5); doc.setTextColor(...PDF_COLORS.textMuted);
+  doc.text("ÉTUDIANT", cell1X, rowLabelY);
+  doc.text("PÉRIODE ACADÉMIQUE", cell2X, rowLabelY);
+  doc.setFont("times","normal"); doc.setFontSize(11.5); doc.setTextColor(...PDF_COLORS.ink);
+  doc.text(fitText(doc, student, cellW - 4), cell1X, rowValueY);
+  doc.text(fitText(doc, label, cellW - 4), cell2X, rowValueY);
+  y += infoBoxH + 24;
+
+  // --- Tableau des UE ---
+  const colName = marginX + 10, colNameW = 235;
+  const colCredit = marginX + 260;
+  const colNote = marginX + 335;
+  const colPoint = marginX + 405;
+  const colStatus = marginX + 465;
+
+  doc.setFillColor(...PDF_COLORS.teal);
+  doc.rect(marginX, y, contentRight - marginX, 24, "F");
+  doc.setFont("times","bold"); doc.setFontSize(9); doc.setTextColor(255,255,255);
+  doc.text("UNITÉ D'ENSEIGNEMENT", colName, y+16);
+  doc.text("CRÉDIT", colCredit, y+16);
+  doc.text("NOTE /100", colNote, y+16);
+  doc.text("POINT", colPoint, y+16);
+  doc.text("STATUT", colStatus, y+16);
+  y += 24;
+
+  doc.setFont("times","normal"); doc.setFontSize(10);
+  list.forEach((u,i)=>{
+    if(y > 740){
+      doc.addPage();
+      drawWatermark(doc, pageW, pageH);
+      y = 60;
+    }
+    const rowH = 22;
+    if(i % 2 === 0){ doc.setFillColor(250,248,242); doc.rect(marginX, y, contentRight - marginX, rowH, "F"); }
+    const note = (u.note===null||u.note===undefined||u.note==="") ? "—" : u.note;
+    const point = (u.note===null||u.note===undefined||isNaN(Number(u.note))) ? "—" : noteToPoint(Number(u.note)).toFixed(1);
+    const status = (u.note===null||u.note===undefined||isNaN(Number(u.note))) ? "—" : ueStatus(Number(u.note));
+    const statusCol = status==="ECHEC" ? PDF_COLORS.brick : status==="CANT" ? PDF_COLORS.amber : status==="CA" ? PDF_COLORS.forest : PDF_COLORS.textMuted;
+
+    doc.setTextColor(...PDF_COLORS.ink);
+    doc.text(fitText(doc, u.name, colNameW), colName, y+15);
+    doc.text(String(u.credit), colCredit, y+15);
+    doc.text(String(note), colNote, y+15);
+    doc.text(String(point), colPoint, y+15);
+    doc.setTextColor(...statusCol); doc.setFont("times","bold");
+    doc.text(String(status), colStatus, y+15);
+    doc.setFont("times","normal"); doc.setTextColor(...PDF_COLORS.ink);
+    y += rowH;
+  });
+  doc.setDrawColor(...PDF_COLORS.greyLine);
+  doc.line(marginX, y, contentRight, y);
+  y += 30;
+
+  // --- Synthèse académique : MGP /4, Moyenne /20, statut ---
+  const summaryH = 78;
+  doc.setFillColor(250,248,242);
+  doc.setDrawColor(...PDF_COLORS.greyLine);
+  doc.roundedRect(marginX, y, contentRight - marginX, summaryH, 4, 4, "FD");
+
+  const thirdW = (contentRight - marginX) / 3;
+  doc.setFont("times","bold"); doc.setFontSize(8.5); doc.setTextColor(...PDF_COLORS.textMuted);
+  doc.text("MGP OBTENUE", marginX + thirdW*0 + 20, y+22);
+  doc.text("MOYENNE GÉNÉRALE", marginX + thirdW*1 + 20, y+22);
+  doc.text("STATUT ACADÉMIQUE", marginX + thirdW*2 + 20, y+22);
+
+  doc.setFont("times","bold"); doc.setFontSize(20); doc.setTextColor(...PDF_COLORS.goldDark);
+  doc.text(`${c.mgp.toFixed(2)} / 4`, marginX + thirdW*0 + 20, y+48);
+  doc.text(`${c.moyenne20.toFixed(2)} / 20`, marginX + thirdW*1 + 20, y+48);
+
+  doc.setFillColor(...statusColor);
+  doc.roundedRect(marginX + thirdW*2 + 20, y+32, thirdW - 40, 26, 13, 13, "F");
+  doc.setFont("times","bold"); doc.setFontSize(11); doc.setTextColor(255,255,255);
+  doc.text(statusLabel[c.status], marginX + thirdW*2 + 20 + (thirdW-40)/2, y+49, { align:"center" });
+
+  // séparateurs verticaux discrets
+  doc.setDrawColor(...PDF_COLORS.greyLine); doc.setLineWidth(0.5);
+  doc.line(marginX + thirdW, y+14, marginX + thirdW, y+summaryH-14);
+  doc.line(marginX + thirdW*2, y+14, marginX + thirdW*2, y+summaryH-14);
+  y += summaryH + 34;
+
+  // --- Bordereau de réussite (pied de page sobre, sans date/signature) ---
+  const bandY = pageH - 56;
+  doc.setDrawColor(...PDF_COLORS.gold); doc.setLineWidth(1);
+  doc.line(marginX, bandY, contentRight, bandY);
+  doc.setFont("times","bold"); doc.setFontSize(10); doc.setTextColor(...PDF_COLORS.goldDark);
+  doc.text("BORDEREAU DE RÉUSSITE ACADÉMIQUE", pageW/2, bandY + 18, { align:"center" });
+  doc.setFont("times","normal"); doc.setFontSize(8.5); doc.setTextColor(...PDF_COLORS.textMuted);
+  doc.text("Université de Yaoundé I — Faculté des Sciences", pageW/2, bandY + 31, { align:"center" });
+
+  doc.save(`MGP_${label.replace(/\s+/g,"_")}_${(student||"etudiant").replace(/\s+/g,"_")}.pdf`);
+  showToast("PDF exporté avec succès");
+}
+
+/* ============================================================
+   PARTAGE
+   ============================================================ */
+async function shareResults(){
+  const c = getActiveComputed();
+  const label = state.activeTab === "S1" ? "Semestre 1" : state.activeTab === "S2" ? "Semestre 2" : "Vue annuelle";
+  const statusLabel = {VIDE:"—", ECHEC_SCOLAIRE:"ÉCHEC SCOLAIRE", ADMIS:"ADMIS", AJOURNE:"AJOURNÉ"};
+  const text = `MGP ${label} : ${c.mgp.toFixed(2)}/4.00 — Statut : ${statusLabel[c.status]} — Crédits validés : ${c.creditsValid}`;
+  if(navigator.share){
+    try{ await navigator.share({ title:"Mon résultat MGP - UY1", text }); }
+    catch(e){ /* annulé par l'utilisateur */ }
+  } else if(navigator.clipboard){
+    await navigator.clipboard.writeText(text);
+    showToast("Résultat copié dans le presse-papiers");
+  } else {
+    showToast(text);
+  }
+}
+
+/* ============================================================
+   RENDU GLOBAL & INIT
+   ============================================================ */
+function renderAll(){
+  renderTabs();
+  renderTable();
+  renderHeroAndStats();
+  renderCharts();
+  renderSimulatorOptions();
+}
+
+function bindStaticEvents(){
+  document.getElementById("themeBtn").addEventListener("click", toggleTheme);
+  document.getElementById("btnAddUE").addEventListener("click", addUE);
+  document.getElementById("btnReset").addEventListener("click", resetAll);
+  document.getElementById("btnPdf").addEventListener("click", exportPDF);
+  document.getElementById("btnPrint").addEventListener("click", ()=>window.print());
+  document.getElementById("btnShare").addEventListener("click", shareResults);
+  document.getElementById("btnSimulate").addEventListener("click", runSimulation);
+  document.getElementById("studentName").addEventListener("input", (e)=>{
+    state.studentName = e.target.value; saveState();
+  });
+}
+
+function init(){
+  loadState();
+  document.getElementById("studentName").value = state.studentName || "";
+  applyTheme();
+  bindStaticEvents();
+  renderAll();
+}
+
+init();
+})();
+</script>
+</body>
+</html>
