@@ -558,7 +558,6 @@ function loadState(){
    ============================================================ */
 function computeSemester(ueList){
   let sumPointsCredits = 0, sumCredits = 0;
-  let sumNotesCredits = 0; // pour la moyenne classique /20
   let creditsValid = 0, creditsInvalid = 0;
   let countCA=0, countCANT=0, countECHEC=0;
   let hasFailure = false;
@@ -570,7 +569,6 @@ function computeSemester(ueList){
     const point = noteToPoint(note);
     const status = ueStatus(note);
     sumPointsCredits += point * credit;
-    sumNotesCredits += note * credit;
     sumCredits += credit;
     if(status === "CA"){ countCA++; creditsValid += credit; }
     if(status === "CANT"){ countCANT++; creditsInvalid += credit; }
@@ -578,7 +576,7 @@ function computeSemester(ueList){
   });
 
   const mgp = sumCredits > 0 ? Math.round((sumPointsCredits / sumCredits) * 100) / 100 : 0;
-  const moyenne20 = sumCredits > 0 ? Math.round(((sumNotesCredits / sumCredits) / 5) * 100) / 100 : 0;
+  const moyenne20 = Math.round(mgp * 5 * 100) / 100;
   let status;
   if(ueList.length === 0){
     status = "VIDE";
